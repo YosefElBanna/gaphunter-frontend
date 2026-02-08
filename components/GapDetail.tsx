@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Gap } from '../types';
+import { Gap } from '../src/types';
 import EvidenceStack from './EvidenceStack';
 import {
     Target, FileText, CheckCircle2,

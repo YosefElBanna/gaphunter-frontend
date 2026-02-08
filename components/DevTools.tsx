@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Bug, CheckCircle, XCircle, Copy, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
-import api from "../src/services/api";
+import api, { API_BASE } from "../src/services/api";
 
 interface DevToolsProps {
     scanId: string | null;
@@ -168,7 +168,7 @@ const DevTools: React.FC<DevToolsProps> = ({ scanId, onScanComplete, onScanFail 
                         {/* Env Info */}
                         <div className="pt-2 border-t border-brand-border/50">
                             <div className="text-[10px] text-brand-muted/60 font-mono">
-                                API: {(import.meta as any).env?.VITE_API_BASE || "localhost:3001"}
+                                API: {API_BASE}
                             </div>
                         </div>
                     </div>

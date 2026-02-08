@@ -11,8 +11,8 @@ import DevTools from "./components/DevTools";
 
 import AdminDashboard from "./src/pages/AdminDashboard";
 
-import { findGaps } from "./services/gapService";
-import * as tagService from "./services/tagService";
+import { findGaps } from "./src/services/gapService";
+import * as tagService from "./src/services/tagService";
 
 import {
   ArrowLeft,

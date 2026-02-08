@@ -4,7 +4,7 @@
  */
 
 import { Tag, GapScanResult } from "../types";
-import api from "../src/services/api";
+import api from "./api";
 
 /**
  * Find gaps based on selected tags and exclusions

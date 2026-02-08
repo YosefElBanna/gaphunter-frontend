@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ExternalLink, MessageCircle, Github, Globe, Star, MessageSquare, Terminal, ChevronUp } from 'lucide-react';
-import { EvidenceItem } from '../types';
+import { EvidenceItem } from '../src/types';
 
 interface EvidenceStackProps {
     evidence: EvidenceItem[];

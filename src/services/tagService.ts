@@ -4,7 +4,7 @@
  */
 
 import { Tag, ProfitPlay } from "../types";
-import api from "../src/services/api";
+import api from "./api";
 
 // =============================================================================
 // Knowledge Level System

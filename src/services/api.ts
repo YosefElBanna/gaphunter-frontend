@@ -3,8 +3,36 @@
  * Centralized fetch wrapper with timeout, retry, and error handling
  */
 
-const RAW_API_BASE =
-    (import.meta as any)?.env?.VITE_API_BASE?.trim() || "http://localhost:3001/api";
+/**
+ * Get the configured API base URL with production guards.
+ * - PROD: Throws if VITE_API_BASE is missing or contains 'localhost'
+ * - DEV: Falls back to localhost:3001
+ */
+function getApiBase(): string {
+    const envBase = (import.meta as any)?.env?.VITE_API_BASE?.trim();
+    const isProd = (import.meta as any)?.env?.PROD;
+
+    if (isProd) {
+        if (!envBase) {
+            throw new Error(
+                "[GapHunter] FATAL: VITE_API_BASE environment variable is not set in production. " +
+                "Set VITE_API_BASE in your Vercel environment variables to your backend URL."
+            );
+        }
+        if (envBase.includes("localhost")) {
+            throw new Error(
+                "[GapHunter] FATAL: VITE_API_BASE contains 'localhost' in production. " +
+                "This is a misconfiguration. Set it to your production backend URL."
+            );
+        }
+        return envBase;
+    }
+
+    // DEV: fallback to localhost is allowed
+    return envBase || "http://localhost:3001/api";
+}
+
+const RAW_API_BASE = getApiBase();
 
 // Normalize: remove trailing slash
 export const API_BASE = RAW_API_BASE.replace(/\/+$/, "");

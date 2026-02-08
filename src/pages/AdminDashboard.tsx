@@ -3,14 +3,10 @@ import {
   AdminOverviewResponse,
   AdminScansListResponse,
   AdminTrendsResponseItem,
-} from "../../types";
+} from "../types";
+import { API_BASE } from "../services/api";
 import { ShieldAlert, KeyRound, RefreshCcw, Trash2 } from "lucide-react";
 
-const RAW_API_BASE =
-  (import.meta as any)?.env?.VITE_API_BASE ?? "http://localhost:3001/api";
-
-// normalize: remove trailing slash
-const API_BASE = String(RAW_API_BASE).replace(/\/+$/, "");
 
 const LS_ADMIN_KEY = "gaphunter-admin-key";
 
