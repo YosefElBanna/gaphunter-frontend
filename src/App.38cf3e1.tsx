@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Gap, GapStatus, Tag, ScanAnalysis } from "./types";
+﻿import { useEffect, useMemo, useState } from "react";
+import type { Gap, GapStatus, Tag, ScanAnalysis } from "./src/types";
 
-import SearchSurface from "../components/SearchSurface";
-import GapCard from "../components/GapCard";
-import GapDetail from "../components/GapDetail";
-import ThemeSwitcher, { Theme } from "../components/ThemeSwitcher";
-import Stepper from "../components/Stepper";
-import DevTools from "../components/DevTools";
 
-import AdminDashboard from "./pages/AdminDashboard";
+import SearchSurface from "./components/SearchSurface";
+import GapCard from "./components/GapCard";
+import GapDetail from "./components/GapDetail";
+import ThemeSwitcher, { Theme } from "./components/ThemeSwitcher";
+import Stepper from "./components/Stepper";
+import DevTools from "./components/DevTools";
+
+import AdminDashboard from "./src/pages/AdminDashboard";
 
 import { findGaps } from "./services/gapService";
 import * as tagService from "./services/tagService";
@@ -26,6 +27,9 @@ import {
 } from "lucide-react";
 
 const App: React.FC = () => {
+  // -----------------------------
+  // Mini Router (no deps)
+  // -----------------------------
   const [path, setPath] = useState<string>(() => window.location.pathname);
 
   useEffect(() => {
@@ -42,6 +46,9 @@ const App: React.FC = () => {
 
   const isAdminRoute = useMemo(() => path === "/admin", [path]);
 
+  // -----------------------------
+  // Theme State (works on both routes)
+  // -----------------------------
   const [theme, setTheme] = useState<Theme>("midnight");
 
   useEffect(() => {
@@ -59,6 +66,9 @@ const App: React.FC = () => {
     localStorage.setItem("gaphunter-theme", theme);
   }, [theme]);
 
+  // -----------------------------
+  // Main App State
+  // -----------------------------
   const [gaps, setGaps] = useState<Gap[]>([]);
   const [scanAnalysis, setScanAnalysis] = useState<ScanAnalysis | null>(null);
   const [selectedGapId, setSelectedGapId] = useState<string | null>(null);
@@ -77,11 +87,10 @@ const App: React.FC = () => {
 
     try {
       const results = await findGaps(tags, excludedTerms);
-
+      // Track scanId for DevTools
       if ((results as any).scanId) {
         setCurrentScanId((results as any).scanId);
       }
-
       setScanAnalysis(results.analysis || null);
 
       if (!results.gaps?.length) {
@@ -99,9 +108,7 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       setStatus("error");
-      setErrorMsg(
-        err?.message || "Failed to connect to GapHunter Engine. Please try again."
-      );
+      setErrorMsg(err?.message || "Failed to connect to GapHunter Engine. Please try again.");
     }
   };
 
@@ -136,6 +143,9 @@ const App: React.FC = () => {
     go("/");
   };
 
+  // -----------------------------
+  // Γ£à ADMIN ROUTE
+  // -----------------------------
   if (isAdminRoute) {
     return (
       <div className="h-screen flex flex-col bg-brand-bg font-body text-brand-text overflow-hidden">
@@ -166,8 +176,12 @@ const App: React.FC = () => {
     );
   }
 
+  // -----------------------------
+  // Γ£à NORMAL APP
+  // -----------------------------
   return (
     <div className="h-screen flex flex-col bg-brand-bg font-body text-brand-text overflow-hidden">
+      {/* Header */}
       <header className="flex-shrink-0 h-16 border-b border-brand-border/40 bg-brand-bg/80 backdrop-blur-md z-50">
         <div className="h-full px-4 md:px-6 flex items-center justify-between">
           <div
@@ -184,13 +198,16 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Admin */}
             <button
               onClick={() => go("/admin")}
               className="hidden md:flex items-center gap-2 text-xs font-mono font-bold uppercase text-brand-muted hover:text-brand-text transition-colors px-3 py-1.5 rounded border border-transparent hover:border-brand-border"
+              title="Admin Analytics"
             >
               <Shield size={14} /> Admin
             </button>
 
+            {/* New search */}
             {viewState === "results" && (
               <button
                 onClick={resetSearch}
@@ -373,6 +390,7 @@ const App: React.FC = () => {
         )}
       </main>
 
+      {/* DevTools - only visible in development */}
       <DevTools scanId={currentScanId} />
     </div>
   );
