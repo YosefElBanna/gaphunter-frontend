@@ -1,190 +1,117 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="midnight">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GapHunter | Real Market Gap Discovery</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GapHunter | Real Market Gap Discovery</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-    rel="stylesheet">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            body: ['Inter', 'sans-serif'], // Readability focus
-            display: ['Space Grotesk', 'sans-serif'], // Character focus
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          lineHeight: {
-            'relaxed-lg': '1.75', // Extra breathing room for evidence
-          },
-          colors: {
-            brand: {
-              bg: 'rgb(var(--bg-main) / <alpha-value>)',
-              card: 'rgb(var(--bg-card) / <alpha-value>)',
-              border: 'rgb(var(--border-main) / <alpha-value>)',
-              text: 'rgb(var(--text-main) / <alpha-value>)',
-              muted: 'rgb(var(--text-muted) / <alpha-value>)',
-              accent: 'rgb(var(--accent) / <alpha-value>)',
-              danger: 'rgb(var(--danger) / <alpha-value>)',
-              // Tag Type Colors (Tints)
-              surface: 'rgb(var(--tag-surface) / <alpha-value>)',
-              workflow: 'rgb(var(--tag-workflow) / <alpha-value>)',
-              tech: 'rgb(var(--tag-tech) / <alpha-value>)',
-              industry: 'rgb(var(--tag-industry) / <alpha-value>)',
-            }
-          },
-          animation: {
-            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'scanline': 'scanline 8s linear infinite',
-          },
-          keyframes: {
-            scanline: {
-              '0%': { transform: 'translateY(-100%)' },
-              '100%': { transform: 'translateY(100%)' },
-            }
-          }
-        }
+    <!-- Theme Variables + Global UI helpers -->
+    <style>
+      :root {
+        --tag-surface: 129 140 248; /* indigo-400 */
+        --tag-workflow: 52 211 153; /* emerald-400 */
+        --tag-tech: 56 189 248; /* sky-400 */
+        --tag-industry: 251 191 36; /* amber-400 */
       }
-    }
-  </script>
-  <style>
-    :root {
-      /* Shared Tag Colors (Brighter/Fresher Tints) */
-      --tag-surface: 129 140 248;
-      /* indigo-400 */
-      --tag-workflow: 52 211 153;
-      /* emerald-400 */
-      --tag-tech: 56 189 248;
-      /* sky-400 */
-      --tag-industry: 251 191 36;
-      /* amber-400 */
-    }
 
-    /* Theme: Midnight (Vibrant Charcoal) */
-    [data-theme='midnight'] {
-      --bg-main: 24 24 27;
-      /* zinc-900 */
-      --bg-card: 39 39 42;
-      /* zinc-800 */
-      --border-main: 63 63 70;
-      /* zinc-700 */
-      --text-main: 255 255 255;
-      --text-muted: 161 161 170;
-      /* zinc-400 */
-      --accent: 45 212 191;
-      /* teal-400 */
-      --danger: 251 113 133;
-      /* rose-400 */
-    }
+      [data-theme="midnight"] {
+        --bg-main: 24 24 27; /* zinc-900 */
+        --bg-card: 39 39 42; /* zinc-800 */
+        --border-main: 63 63 70; /* zinc-700 */
+        --text-main: 255 255 255;
+        --text-muted: 161 161 170; /* zinc-400 */
+        --accent: 45 212 191; /* teal-400 */
+        --danger: 251 113 133; /* rose-400 */
+      }
 
-    /* Theme: Ivory (Editorial) */
-    [data-theme='ivory'] {
-      --bg-main: 250 250 249;
-      /* stone-50 */
-      --bg-card: 255 255 255;
-      /* white */
-      --border-main: 231 229 228;
-      /* stone-200 */
-      --text-main: 28 25 23;
-      /* stone-900 */
-      --text-muted: 120 113 108;
-      /* stone-500 */
-      --accent: 217 119 6;
-      /* amber-600 */
-      --danger: 220 38 38;
-      /* red-600 */
-    }
+      [data-theme="ivory"] {
+        --bg-main: 250 250 249; /* stone-50 */
+        --bg-card: 255 255 255; /* white */
+        --border-main: 231 229 228; /* stone-200 */
+        --text-main: 28 25 23; /* stone-900 */
+        --text-muted: 120 113 108; /* stone-500 */
+        --accent: 217 119 6; /* amber-600 */
+        --danger: 220 38 38; /* red-600 */
+      }
 
-    /* Theme: Dawn (SaaS Modern) */
-    [data-theme='dawn'] {
-      --bg-main: 248 250 252;
-      /* slate-50 */
-      --bg-card: 255 255 255;
-      /* white */
-      --border-main: 226 232 240;
-      /* slate-200 */
-      --text-main: 15 23 42;
-      /* slate-900 */
-      --text-muted: 100 116 139;
-      /* slate-500 */
-      --accent: 59 130 246;
-      /* blue-500 */
-      --danger: 239 68 68;
-      /* red-500 */
-    }
+      [data-theme="dawn"] {
+        --bg-main: 248 250 252; /* slate-50 */
+        --bg-card: 255 255 255; /* white */
+        --border-main: 226 232 240; /* slate-200 */
+        --text-main: 15 23 42; /* slate-900 */
+        --text-muted: 100 116 139; /* slate-500 */
+        --accent: 59 130 246; /* blue-500 */
+        --danger: 239 68 68; /* red-500 */
+      }
 
-    body {
-      background-color: rgb(var(--bg-main));
-      color: rgb(var(--text-main));
-      transition: background-color 0.3s ease, color 0.3s ease;
-      overflow-x: hidden;
-      font-family: 'Inter', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+      body {
+        background-color: rgb(var(--bg-main));
+        color: rgb(var(--text-main));
+        transition: background-color 0.3s ease, color 0.3s ease;
+        overflow-x: hidden;
+        font-family: "Inter", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
 
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6 {
-      font-family: 'Space Grotesk', sans-serif;
-      letter-spacing: -0.02em;
-    }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: "Space Grotesk", sans-serif;
+        letter-spacing: -0.02em;
+      }
 
-    /* Subtle Scanline Overlay */
-    .scanline-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(to bottom,
+      .scanline-overlay {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(
+          to bottom,
           transparent 0%,
           rgb(var(--accent) / 0.03) 50%,
-          transparent 100%);
-      background-size: 100% 4px;
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.3;
-    }
+          transparent 100%
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.3;
+      }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
 
-    ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.1);
-    }
+      ::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+      }
 
-    ::-webkit-scrollbar-thumb {
-      background: rgb(var(--border-main));
-      border-radius: 10px;
-    }
+      ::-webkit-scrollbar-thumb {
+        background: rgb(var(--border-main));
+        border-radius: 10px;
+      }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgb(var(--accent));
-    }
-  </style>
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgb(var(--accent));
+      }
+    </style>
+  </head>
 
-  <link rel="stylesheet" href="/index.css">
-</head>
+  <body>
+    <div id="root"></div>
+    <div class="scanline-overlay"></div>
 
-<body>
-  <div id="root"></div>
-  <div class="scanline-overlay"></div>
-  <script type="module" src="/index.tsx"></script>
-</body>
-
+    <!-- ✅ Vite entry الصحيح -->
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
 </html>

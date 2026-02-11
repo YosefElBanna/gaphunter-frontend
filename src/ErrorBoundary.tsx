@@ -1,35 +1,33 @@
-import React, { ErrorInfo, ReactNode } from "react";
+import React, { Component, ErrorInfo, ReactNode } from "react";
 
-interface Props {
-    children?: ReactNode;
-}
+type Props = { children: ReactNode };
+type State = { hasError: boolean };
 
-interface State {
-    hasError: boolean;
-    error: Error | null;
-}
+export class ErrorBoundary extends Component<Props, State> {
+    state: State = { hasError: false };
 
-export class ErrorBoundary extends React.Component<Props, State> {
-    public state: State = {
-        hasError: false,
-        error: null,
-    };
-
-    public static getDerivedStateFromError(error: Error): State {
-        return { hasError: true, error };
+    static getDerivedStateFromError(_: Error): State {
+        return { hasError: true };
     }
 
-    public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error("Uncaught error:", error, errorInfo);
     }
 
-    public render() {
+    render() {
         if (this.state.hasError) {
             return (
-                <div style={{ padding: "20px", color: "red", background: "#fff", zIndex: 9999, position: "relative" }}>
-                    <h1>Something went wrong.</h1>
-                    <pre>{this.state.error?.toString()}</pre>
-                    <pre>{this.state.error?.stack}</pre>
+                <div className="flex h-screen w-full items-center justify-center bg-zinc-900 text-white">
+                    <div className="text-center">
+                        <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+                        <p className="mb-4">Please try refreshing the page.</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="rounded bg-indigo-600 px-4 py-2 font-bold text-white hover:bg-indigo-700"
+                        >
+                            Reload Page
+                        </button>
+                    </div>
                 </div>
             );
         }
