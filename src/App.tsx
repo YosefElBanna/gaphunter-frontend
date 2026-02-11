@@ -207,7 +207,70 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-1 overflow-hidden relative">
-        {/* UI unchanged */}
+        {viewState === "search" && (
+          <div className="h-full overflow-y-auto custom-scrollbar p-4 md:p-8 flex flex-col items-center">
+            <div className="w-full max-w-4xl space-y-8">
+              <div className="text-center space-y-4 mt-8 md:mt-16 mb-8">
+                <h1 className="font-display font-bold text-4xl md:text-5xl lg:text-6xl text-brand-text tracking-tight">
+                  Find <span className="text-brand-accent">Exits</span> in the
+                  <br />
+                  <span className="text-brand-text/60">Noise.</span>
+                </h1>
+                <p className="text-lg md:text-xl text-brand-muted max-w-2xl mx-auto leading-relaxed">
+                  The first <span className="text-brand-text font-bold">Deep Reasoning Engine</span> for identifying structural market gaps, forgotten moats, and high-leverage entry points.
+                </p>
+              </div>
+
+              <SearchSurface onSearch={handleSearch} isLoading={status === "scanning"} />
+            </div>
+          </div>
+        )}
+
+        {viewState === "results" && (
+          <div className="h-full flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-brand-border/50">
+            {/* Gap List (Sidebar) */}
+            <div className={`${selectedGapId ? 'hidden md:flex' : 'flex'} md:w-[380px] lg:w-[420px] flex-col bg-brand-bg/50 backdrop-blur-sm z-10`}>
+              <div className="flex-shrink-0 p-4 border-b border-brand-border/40 flex items-center justify-between">
+                <div className="text-xs font-mono font-bold uppercase text-brand-muted tracking-widest">
+                  {gaps.length} Signals Detected
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+                {gaps.map((gap) => (
+                  <GapCard
+                    key={gap.id}
+                    gap={gap}
+                    isActive={selectedGapId === gap.id}
+                    onClick={() => setSelectedGapId(gap.id)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Gap Detail (Main View) */}
+            <div className={`${selectedGapId ? 'flex' : 'hidden md:flex'} flex-1 relative overflow-hidden bg-brand-bg`}>
+              {selectedGap ? (
+                <>
+                  <div className="md:hidden absolute top-4 left-4 z-50">
+                    <button
+                      onClick={() => setSelectedGapId(null)}
+                      className="p-2 bg-brand-card/80 backdrop-blur border border-brand-border rounded-full shadow-lg text-brand-text hover:bg-brand-card transition-colors"
+                    >
+                      <ArrowLeft size={16} />
+                    </button>
+                  </div>
+                  <GapDetail gap={selectedGap} />
+                </>
+              ) : (
+                <div className="h-full flex items-center justify-center text-brand-muted flex-col gap-4">
+                  <Target size={48} className="opacity-20" />
+                  <p className="font-mono text-sm uppercase tracking-widest opacity-60">Select a signal to analyze</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       <DevTools scanId={currentScanId} />
