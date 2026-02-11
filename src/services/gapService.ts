@@ -14,6 +14,7 @@ export async function findGaps(
   tags: Tag[],
   excludedTerms: string[] = []
 ): Promise<GapScanResult> {
+  console.log("[GapService] findGaps called");
   const tagNames = tags.map((t) => t.name);
 
   // Backend expects POST /api/scans
@@ -56,9 +57,9 @@ export async function getScanStatus(
   // Optional: crude progress mapping from status
   const progress =
     scan.status === "RUNNING" ? 30 :
-    scan.status === "SUCCESS" ? 100 :
-    scan.status === "FAILED" ? 100 :
-    undefined;
+      scan.status === "SUCCESS" ? 100 :
+        scan.status === "FAILED" ? 100 :
+          undefined;
 
   return {
     status: scan.status,

@@ -68,6 +68,7 @@ const App: React.FC = () => {
   const [currentScanId, setCurrentScanId] = useState<string | null>(null);
 
   const handleSearch = async (tags: Tag[], excludedTerms: string[]) => {
+    console.log("[App] handleSearch triggered", { tags, excludedTerms });
     setStatus("scanning");
     setErrorMsg(null);
     setGaps([]);

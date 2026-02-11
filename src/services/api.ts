@@ -16,20 +16,21 @@ function getApiBase(): string {
     if (!envBase) {
       throw new Error(
         "[GapHunter] FATAL: VITE_API_BASE environment variable is not set in production. " +
-          "Set VITE_API_BASE in your Vercel environment variables to your backend ORIGIN (no /api)."
+        "Set VITE_API_BASE in your Vercel environment variables to your backend ORIGIN (no /api)."
       );
     }
     if (envBase.includes("localhost")) {
       throw new Error(
         "[GapHunter] FATAL: VITE_API_BASE contains 'localhost' in production. " +
-          "This is a misconfiguration. Set it to your production backend ORIGIN (no /api)."
+        "This is a misconfiguration. Set it to your production backend ORIGIN (no /api)."
       );
     }
     return envBase;
   }
 
   // DEV: fallback to localhost ORIGIN is allowed
-  return envBase || "http://localhost:3001";
+  // Use relative path "" to leverage Vite proxy in vite.config.ts
+  return envBase || "";
 }
 
 const RAW_API_BASE = getApiBase();
@@ -162,6 +163,7 @@ export async function apiRequest<T>(
   } = options;
 
   const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+  console.log("[API] apiRequest", { method, url, body, API_BASE });
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

@@ -123,6 +123,7 @@ const SearchSurface: React.FC<SearchSurfaceProps> = ({ onSearch, isLoading }) =>
     };
 
     const handleRunDiscovery = () => {
+        console.log("[SearchSurface] handleRunDiscovery called", { activeTags, excludedTerms });
         if (activeTags.length > 0) {
             onSearch(activeTags, excludedTerms);
         }
