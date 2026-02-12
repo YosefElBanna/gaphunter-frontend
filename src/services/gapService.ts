@@ -1,78 +1,70 @@
-/**
- * Gap Service
- * Handles gap scanning and analysis via backend API
- */
-
 import { Tag, GapScanResult } from "../types";
 import api from "./api";
 
-/**
- * Find gaps based on selected tags and exclusions
- * Calls the backend API to perform the scan
- */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type StartScanResponse = {
+  scanId: string;
+};
+
+type ScanStatusResponse = {
+  id: string;
+  status: "RUNNING" | "SUCCESS" | "FAILED" | "QUEUED";
+  result: any | null;
+  errorMessage?: string | null;
+};
+
 export async function findGaps(
   tags: Tag[],
   excludedTerms: string[] = []
-): Promise<GapScanResult> {
-  console.log("[GapService] findGaps called");
+): Promise<GapScanResult & { scanId: string }> {
   const tagNames = tags.map((t) => t.name);
 
-  // Backend expects POST /api/scans
-  const response = await api.post<GapScanResult>("/scans", {
+  // 1) Start scan - api client returns response directly (no .data wrapper)
+  const startResponse = await api.post<StartScanResponse>("/scans", {
     tags: tagNames,
     excludedTerms,
   });
 
-  return response;
-}
+  if (!startResponse.scanId) {
+    throw new Error("Backend did not return scanId.");
+  }
 
-/**
- * Get scan status by ID
- * NOTE:
- * Backend does NOT have /scans/:id/status
- * It has GET /scans/:id returning the scan object (status + result)
- */
-export async function getScanStatus(
-  scanId: string
-): Promise<{
-  status: string;
-  progress?: number;
-  results?: GapScanResult;
-}> {
-  const scan = await api.get<{
-    id: string;
-    status: string;
-    result: any | null;
-    errorCode?: string | null;
-    errorMessage?: string | null;
-  }>(`/scans/${scanId}`);
+  const scanId = startResponse.scanId;
 
-  // Map backend shape -> frontend expected shape
-  // If your backend stores results as scan.result (may be null until complete)
-  const results: GapScanResult | undefined =
-    scan?.result && typeof scan.result === "object"
-      ? (scan.result as GapScanResult)
-      : undefined;
+  // 2) Poll until finished
+  const TIMEOUT_MS = 120_000; // 2 minutes
+  const startedAt = Date.now();
+  let delay = 1200; // Start at 1.2s
 
-  // Optional: crude progress mapping from status
-  const progress =
-    scan.status === "RUNNING" ? 30 :
-      scan.status === "SUCCESS" ? 100 :
-        scan.status === "FAILED" ? 100 :
-          undefined;
+  while (true) {
+    // Wait before polling (prevents immediate hammering)
+    await sleep(delay);
 
-  return {
-    status: scan.status,
-    progress,
-    results,
-  };
-}
+    // Check timeout AFTER sleep to prevent hanging on last request
+    if (Date.now() - startedAt > TIMEOUT_MS) {
+      throw new Error("Scan timed out after 2 minutes. Please try again.");
+    }
 
-/**
- * Cancel an in-progress scan
- * (Only keep this if backend actually supports DELETE /api/scans/:id)
- * If not supported, remove it or implement backend route.
- */
-export async function cancelScan(scanId: string): Promise<void> {
-  await api.delete(`/scans/${scanId}`);
+    // api client returns response directly (no .data wrapper)
+    const scan = await api.get<ScanStatusResponse>(`/scans/${scanId}`);
+
+    if (scan.status === "FAILED") {
+      throw new Error(scan.errorMessage || "Scan failed.");
+    }
+
+    if (scan.status === "SUCCESS") {
+      if (!scan.result) {
+        throw new Error("Scan finished but result is empty.");
+      }
+
+      // Return the result with scanId attached
+      return { ...(scan.result as GapScanResult), scanId };
+    }
+
+    // RUNNING / QUEUED - increase delay exponentially up to 3s
+    delay = Math.min(3000, Math.floor(delay * 1.15));
+  }
 }
