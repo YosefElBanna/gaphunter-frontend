@@ -35,7 +35,7 @@ export async function findGaps(
   const scanId = startResponse.scanId;
 
   // 2) Poll until finished
-  const TIMEOUT_MS = 120_000; // 2 minutes
+  const DEFAULT_TIMEOUT_MS = 180_000; // 3 minutes
   const startedAt = Date.now();
   let delay = 1200; // Start at 1.2s
 
@@ -44,8 +44,8 @@ export async function findGaps(
     await sleep(delay);
 
     // Check timeout AFTER sleep to prevent hanging on last request
-    if (Date.now() - startedAt > TIMEOUT_MS) {
-      throw new Error("Scan timed out after 2 minutes. Please try again.");
+    if (Date.now() - startedAt > DEFAULT_TIMEOUT_MS) {
+      throw new Error("Scan timed out after 3 minutes. Please try again.");
     }
 
     // api client returns response directly (no .data wrapper)
