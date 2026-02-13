@@ -8,9 +8,10 @@ import ScannerHUD from './ScannerHUD';
 interface SearchSurfaceProps {
     onSearch: (tags: Tag[], excludedTerms: string[]) => void;
     isLoading: boolean;
+    scanStage?: string;
 }
 
-const SearchSurface: React.FC<SearchSurfaceProps> = ({ onSearch, isLoading }) => {
+const SearchSurface: React.FC<SearchSurfaceProps> = ({ onSearch, isLoading, scanStage }) => {
     const [inputValue, setInputValue] = useState('');
     const [activeTags, setActiveTags] = useState<Tag[]>([]);
     const [excludedTerms, setExcludedTerms] = useState<string[]>([]);
@@ -420,7 +421,7 @@ const SearchSurface: React.FC<SearchSurfaceProps> = ({ onSearch, isLoading }) =>
 
             <div className="flex flex-col items-center pt-4 gap-3 min-h-[80px]">
                 {isLoading ? (
-                    <ScannerHUD />
+                    <ScannerHUD stage={scanStage} />
                 ) : (
                     <>
                         <button

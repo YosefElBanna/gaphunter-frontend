@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Gap, GapStatus, Tag, ScanAnalysis } from "./types";
 
 import SearchSurface from "../components/SearchSurface";
@@ -66,18 +66,47 @@ const App: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [viewState, setViewState] = useState<"search" | "results">("search");
   const [currentScanId, setCurrentScanId] = useState<string | null>(null);
+  const [scanStage, setScanStage] = useState<string | undefined>(undefined);
+
+  // Concurrency guard: abort previous scan, prevent stale state updates
+  const scanAbortRef = useRef<AbortController | null>(null);
+  const scanGenRef = useRef(0);
+
+  // Cleanup: abort in-flight scan on unmount
+  useEffect(() => {
+    return () => { scanAbortRef.current?.abort(); };
+  }, []);
 
   const handleSearch = async (tags: Tag[], excludedTerms: string[]) => {
     console.log("[App] handleSearch triggered", { tags, excludedTerms });
+
+    // Abort any in-flight scan
+    scanAbortRef.current?.abort();
+    const controller = new AbortController();
+    scanAbortRef.current = controller;
+    const thisGen = ++scanGenRef.current;
+    const isStale = () => scanGenRef.current !== thisGen || controller.signal.aborted;
+
     setStatus("scanning");
     setErrorMsg(null);
     setGaps([]);
     setScanAnalysis(null);
     setSelectedGapId(null);
     setCurrentScanId(null);
+    setScanStage(undefined);
 
     try {
-      const results = await findGaps(tags, excludedTerms);
+      const results = await findGaps(tags, excludedTerms, {
+        signal: controller.signal,
+        onProgress: (p) => {
+          if (isStale()) return;
+          setScanStage(p.stage);
+          setCurrentScanId(p.scanId);
+        },
+      });
+
+      // Guard: ignore results from a superseded scan
+      if (isStale()) return;
 
       if ((results as any).scanId) {
         setCurrentScanId((results as any).scanId);
@@ -98,11 +127,20 @@ const App: React.FC = () => {
         setSelectedGapId(results.gaps[0].id);
       }
     } catch (err: any) {
+      // Silently ignore aborted scans (superseded by a new scan)
+      if (isStale()) return;
+      if (err instanceof DOMException && err.name === "AbortError") return;
+
       console.error(err);
       setStatus("error");
-      setErrorMsg(
-        err?.message || "Failed to connect to GapHunter Engine. Please try again."
-      );
+      const msg = err?.message || "Failed to connect to GapHunter Engine. Please try again.";
+      if (msg.includes("stage timed out")) {
+        setErrorMsg(`${msg} — The AI model is taking longer than expected. Try fewer topics or retry.`);
+      } else if (msg.includes("Scan timed out after")) {
+        setErrorMsg("The analysis is taking longer than expected. Please try again with fewer topics.");
+      } else {
+        setErrorMsg(msg);
+      }
     }
   };
 
@@ -243,7 +281,7 @@ const App: React.FC = () => {
                 )}
               </div>
 
-              <SearchSurface onSearch={handleSearch} isLoading={status === "scanning"} />
+              <SearchSurface onSearch={handleSearch} isLoading={status === "scanning"} scanStage={scanStage} />
 
               {/* Loading */}
               {status === "scanning" && (

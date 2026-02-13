@@ -101,7 +101,11 @@ async function fetchWithTimeout(
   // Combine with external signal if provided
   const externalSignal = init.signal;
   if (externalSignal) {
-    externalSignal.addEventListener("abort", () => controller.abort());
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
   }
 
   try {
@@ -188,6 +192,9 @@ export async function apiRequest<T>(
 
       // Don't retry on abort
       if (error instanceof DOMException && error.name === "AbortError") {
+        // External signal abort (e.g. new scan started) — preserve AbortError
+        if (signal?.aborted) throw error;
+        // Internal timeout — convert to ApiError
         throw new ApiError("Request timeout", 408);
       }
 

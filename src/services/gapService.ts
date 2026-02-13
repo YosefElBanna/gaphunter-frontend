@@ -1,8 +1,20 @@
 import { Tag, GapScanResult } from "../types";
 import api from "./api";
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/** Abortable sleep — rejects with AbortError if signal fires */
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
 }
 
 type StartScanResponse = {
@@ -14,19 +26,41 @@ type ScanStatusResponse = {
   status: "RUNNING" | "SUCCESS" | "FAILED" | "QUEUED";
   result: any | null;
   errorMessage?: string | null;
+  stage?: string; // e.g. "EXPAND", "GENERATE", "RANK", "VERIFY" — optional from backend
 };
+
+export interface ScanProgress {
+  scanId: string;
+  stage?: string;
+  status: "RUNNING" | "QUEUED";
+  elapsedMs: number;
+}
+
+export interface FindGapsOptions {
+  signal?: AbortSignal;
+  onProgress?: (progress: ScanProgress) => void;
+}
+
+/** Configurable polling timeout: VITE_SCAN_POLL_TIMEOUT_MS env var, fallback 300 000 ms (5 min) */
+const POLL_TIMEOUT_MS: number = (() => {
+  const env = (import.meta as any)?.env?.VITE_SCAN_POLL_TIMEOUT_MS;
+  const parsed = env ? parseInt(String(env), 10) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 300_000;
+})();
 
 export async function findGaps(
   tags: Tag[],
-  excludedTerms: string[] = []
+  excludedTerms: string[] = [],
+  options?: FindGapsOptions
 ): Promise<GapScanResult & { scanId: string }> {
+  const { signal, onProgress } = options ?? {};
   const tagNames = tags.map((t) => t.name);
 
-  // 1) Start scan - api client returns response directly (no .data wrapper)
+  // 1) Start scan
   const startResponse = await api.post<StartScanResponse>("/scans", {
     tags: tagNames,
     excludedTerms,
-  });
+  }, { signal });
 
   if (!startResponse.scanId) {
     throw new Error("Backend did not return scanId.");
@@ -34,22 +68,24 @@ export async function findGaps(
 
   const scanId = startResponse.scanId;
 
+  // Report scanId immediately so caller can track it
+  onProgress?.({ scanId, stage: undefined, status: "QUEUED", elapsedMs: 0 });
+
   // 2) Poll until finished
-  const DEFAULT_TIMEOUT_MS = 180_000; // 3 minutes
   const startedAt = Date.now();
-  let delay = 1200; // Start at 1.2s
+  let delay = 1200;
 
   while (true) {
-    // Wait before polling (prevents immediate hammering)
-    await sleep(delay);
+    await sleep(delay, signal);
 
-    // Check timeout AFTER sleep to prevent hanging on last request
-    if (Date.now() - startedAt > DEFAULT_TIMEOUT_MS) {
-      throw new Error("Scan timed out after 3 minutes. Please try again.");
+    const elapsed = Date.now() - startedAt;
+    if (elapsed > POLL_TIMEOUT_MS) {
+      throw new Error(
+        `Scan timed out after ${Math.round(POLL_TIMEOUT_MS / 1000)}s. Please try again with fewer topics.`
+      );
     }
 
-    // api client returns response directly (no .data wrapper)
-    const scan = await api.get<ScanStatusResponse>(`/scans/${scanId}`);
+    const scan = await api.get<ScanStatusResponse>(`/scans/${scanId}`, { signal });
 
     if (scan.status === "FAILED") {
       throw new Error(scan.errorMessage || "Scan failed.");
@@ -59,12 +95,17 @@ export async function findGaps(
       if (!scan.result) {
         throw new Error("Scan finished but result is empty.");
       }
-
-      // Return the result with scanId attached
       return { ...(scan.result as GapScanResult), scanId };
     }
 
-    // RUNNING / QUEUED - increase delay exponentially up to 3s
+    // RUNNING / QUEUED — report progress to caller
+    onProgress?.({
+      scanId,
+      stage: scan.stage,
+      status: scan.status,
+      elapsedMs: elapsed,
+    });
+
     delay = Math.min(3000, Math.floor(delay * 1.15));
   }
 }

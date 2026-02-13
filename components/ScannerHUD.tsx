@@ -1,87 +1,101 @@
 
 import React, { useEffect, useState } from 'react';
-import { Loader2, Radio, Terminal, Wifi, BrainCircuit } from 'lucide-react';
+import { Loader2, Radio, Wifi, BrainCircuit } from 'lucide-react';
 
-const STEPS = [
-  "INITIALIZING DEEP SCAN PROTOCOL...",
-  "DECOMPOSING WORKFLOW LAYERS...",
-  "SEARCHING GITHUB ISSUES & REPOS...",
-  "SCANNING REDDIT THREADS...",
-  "PARSING X (TWITTER) DISCUSSIONS...",
-  "CROSS-REFERENCING G2 REVIEWS...",
-  "ANALYZING STACKOVERFLOW QUERIES...",
-  "VALIDATING COMPLAINT PATTERNS...",
-  "EVALUATING INCUMBENT DEBT...",
-  "CALCULATING WILLINGNESS-TO-PAY...",
-  "GENERATING PLAIN-ENGLISH THESES...",
-  "SYNTHESIZING FINAL REPORT..."
+interface ScannerHUDProps {
+  stage?: string;
+}
+
+/** Human-readable labels for known backend pipeline stages */
+const STAGE_LABELS: Record<string, string> = {
+  EXPAND: "Expanding search topics",
+  GENERATE: "Generating gap hypotheses",
+  RANK: "Ranking and scoring gaps",
+  VERIFY: "Verifying evidence quality",
+};
+
+/** Flavor text cycled when no real stage info is available from backend */
+const FLAVOR_MESSAGES = [
+  "INITIALIZING DEEP SCAN PROTOCOL",
+  "DECOMPOSING WORKFLOW LAYERS",
+  "SEARCHING LIVE SOURCES",
+  "ANALYZING COMPLAINT PATTERNS",
+  "CROSS-REFERENCING EVIDENCE",
+  "SYNTHESIZING INSIGHTS",
 ];
 
-const ScannerHUD: React.FC = () => {
-  const [stepIndex, setStepIndex] = useState(0);
-  const [logs, setLogs] = useState<string[]>([]);
+const ScannerHUD: React.FC<ScannerHUDProps> = ({ stage }) => {
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [flavorIdx, setFlavorIdx] = useState(0);
 
+  // Elapsed timer — resets each mount (new scan)
   useEffect(() => {
-    // Slower progress to manage expectations for deep scan (~20-30s simulation visually)
-    // The actual API might take 20-40s depending on load, this HUD keeps them engaged.
+    const start = Date.now();
     const interval = setInterval(() => {
-      setStepIndex(prev => {
-        if (prev >= STEPS.length - 1) return prev;
-        return prev + 1;
-      });
-    }, 2500);
-
+      setElapsedSec(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
 
+  // Cycle flavor messages only when backend hasn't reported a real stage
   useEffect(() => {
-    if (STEPS[stepIndex]) {
-      setLogs(prev => [STEPS[stepIndex], ...prev].slice(0, 4));
-    }
-  }, [stepIndex]);
+    if (stage) return;
+    const interval = setInterval(() => {
+      setFlavorIdx((prev) => (prev + 1) % FLAVOR_MESSAGES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [stage]);
+
+  const stageLabel = stage
+    ? STAGE_LABELS[stage] || `Processing: ${stage}`
+    : FLAVOR_MESSAGES[flavorIdx];
+
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
+  };
 
   return (
     <div className="w-full bg-brand-card/90 border border-brand-accent/30 rounded-lg p-4 font-mono text-xs shadow-2xl relative overflow-hidden backdrop-blur-md">
-      
-      {/* Decorative Header */}
+
+      {/* Header */}
       <div className="flex justify-between items-center mb-3 border-b border-brand-border/50 pb-2">
-        <div className="flex items-center gap-2 text-brand-accent animate-pulse">
-           <Radio size={14} />
-           <span className="font-bold tracking-widest">DEEP REASONING ACTIVE</span>
+        <div className="flex items-center gap-2 text-brand-accent">
+          <Radio size={14} className="animate-pulse" />
+          <span className="font-bold tracking-widest">DEEP REASONING ACTIVE</span>
         </div>
         <div className="flex items-center gap-2 text-brand-muted">
-           <span>{Math.min(Math.round(((stepIndex + 1) / STEPS.length) * 100), 99)}%</span>
-           <Loader2 size={12} className="animate-spin" />
+          <span>{formatTime(elapsedSec)}</span>
+          <Loader2 size={12} className="animate-spin" />
         </div>
       </div>
 
-      {/* Main Status Display */}
-      <div className="space-y-2 mb-4">
-         <div className="text-brand-accent font-bold text-sm flex items-center gap-2">
-            <BrainCircuit size={14} />
-            {STEPS[stepIndex]}
-         </div>
-         <div className="h-1 w-full bg-brand-border/30 rounded-full overflow-hidden">
-            <div 
-                className="h-full bg-brand-accent transition-all duration-500 ease-out"
-                style={{ width: `${((stepIndex + 1) / STEPS.length) * 100}%` }}
-            ></div>
-         </div>
+      {/* Current stage */}
+      <div className="space-y-2 mb-3">
+        <div className="text-brand-accent font-bold text-sm flex items-center gap-2">
+          <BrainCircuit size={14} />
+          <span>{stageLabel}</span>
+          <span className="animate-pulse">...</span>
+        </div>
+        {/* Indeterminate progress bar — pulsing, never shows a fake % */}
+        <div className="h-1 w-full bg-brand-border/30 rounded-full overflow-hidden">
+          <div className="h-full w-full bg-brand-accent/60 rounded-full animate-pulse" />
+        </div>
       </div>
 
-      {/* Log Stream */}
-      <div className="space-y-1 opacity-70">
-        {logs.map((log, idx) => (
-            <div key={idx} className={`flex items-center gap-2 ${idx === 0 ? 'text-brand-text' : 'text-brand-muted'}`}>
-                <span className="text-[10px] w-8 text-right font-mono opacity-50">{idx > 0 ? `-${idx * 2}s` : 'now'}</span>
-                <span>{log}</span>
-            </div>
-        ))}
-      </div>
+      {/* Stage badge when backend reports a real stage */}
+      {stage && (
+        <div className="flex items-center gap-2 text-brand-muted text-[10px]">
+          <span>Stage: <span className="text-brand-text font-bold">{stage}</span></span>
+          <span className="text-brand-border">•</span>
+          <span>Elapsed: {formatTime(elapsedSec)}</span>
+        </div>
+      )}
 
       {/* Background decoration */}
       <div className="absolute top-0 right-0 p-2 opacity-10">
-         <Wifi size={64} />
+        <Wifi size={64} />
       </div>
     </div>
   );
