@@ -42,7 +42,7 @@ const ORIGIN = RAW_API_BASE.replace(/\/+$/, "");
 export const API_BASE = `${ORIGIN}/api`;
 
 // Configuration
-const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 120_000; // 120s — scan pipeline can take 60-180s
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 
