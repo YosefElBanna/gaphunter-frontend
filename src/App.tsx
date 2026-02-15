@@ -468,19 +468,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-brand-border/40 bg-brand-bg/80 backdrop-blur py-4 z-40">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] text-brand-muted font-mono uppercase tracking-wider">
-          <div>
-            © 2026 GAPHUNTER INTELLIGENCE. ALL RIGHTS RESERVED.
-          </div>
-          <div className="flex items-center gap-6">
-            <span className="hover:text-brand-text cursor-pointer transition-colors">Privacy Policy</span>
-            <span className="hover:text-brand-text cursor-pointer transition-colors">Terms of Service</span>
-            <span className="hover:text-brand-text cursor-pointer transition-colors">Contact Support</span>
-          </div>
-        </div>
-      </footer>
+
 
       <DevTools scanId={currentScanId} />
     </div>
