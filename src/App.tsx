@@ -23,6 +23,8 @@ import {
   Shield,
   ShieldAlert,
   Target,
+  X,
+  CheckCircle2,
 } from "lucide-react";
 
 const App: React.FC = () => {
@@ -68,6 +70,17 @@ const App: React.FC = () => {
   const [currentScanId, setCurrentScanId] = useState<string | null>(null);
   const [scanStage, setScanStage] = useState<string | undefined>(undefined);
 
+  // Toast State
+  const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: 'error' | 'success' | 'info' }>>([]);
+
+  const showToast = (message: string, type: 'error' | 'success' | 'info' = 'info') => {
+    const id = Math.random().toString(36).substring(7);
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  };
+
   // Concurrency guard: abort previous scan, prevent stale state updates
   const scanAbortRef = useRef<AbortController | null>(null);
   const scanGenRef = useRef(0);
@@ -78,7 +91,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleSearch = async (tags: Tag[], excludedTerms: string[]) => {
-    console.log("[App] handleSearch triggered", { tags, excludedTerms });
+    // console.log("[App] handleSearch triggered", { tags, excludedTerms });
 
     // Abort any in-flight scan
     scanAbortRef.current?.abort();
@@ -133,14 +146,20 @@ const App: React.FC = () => {
 
       console.error(err);
       setStatus("error");
-      const msg = err?.message || "Failed to connect to GapHunter Engine. Please try again.";
-      if (msg.includes("stage timed out")) {
-        setErrorMsg(`${msg} — The AI model is taking longer than expected. Try fewer topics or retry.`);
-      } else if (msg.includes("Scan timed out after")) {
-        setErrorMsg("The analysis is taking longer than expected. Please try again with fewer topics.");
-      } else {
-        setErrorMsg(msg);
+
+      let msg = err?.message || "Failed to connect to GapHunter Engine.";
+
+      // User-friendly error mapping
+      if (msg.includes("429") || msg.includes("quota")) {
+        msg = "System is experiencing high traffic. Please try again in a moment.";
+      } else if (msg.includes("500") || msg.includes("503")) {
+        msg = "Engine is temporarily unavailable. We're working on it.";
+      } else if (msg.includes("timed out")) {
+        msg = "The analysis took too long. Try narrowing your topic.";
       }
+
+      setErrorMsg(msg);
+      showToast(msg, 'error');
     }
   };
 
@@ -245,6 +264,28 @@ const App: React.FC = () => {
         </div>
       </header>
 
+      {/* Toasts */}
+      <div className="fixed top-20 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+        {toasts.map((t) => (
+          <div
+            key={t.id}
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl border border-brand-border/50 backdrop-blur-md animate-in slide-in-from-right-full duration-300 ${t.type === "error"
+              ? "bg-brand-danger/10 text-brand-danger"
+              : "bg-brand-card text-brand-text"
+              }`}
+          >
+            {t.type === "error" ? <ShieldAlert size={18} /> : <CheckCircle2 size={18} />}
+            <span className="text-sm font-medium">{t.message}</span>
+            <button
+              onClick={() => setToasts((prev) => prev.filter((item) => item.id !== t.id))}
+              className="ml-2 opacity-50 hover:opacity-100"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
+
       {/* Main */}
       <main className="flex-1 overflow-hidden relative">
         {/* VIEW 1: SEARCH */}
@@ -295,25 +336,40 @@ const App: React.FC = () => {
 
               {/* Empty / Error */}
               {(status === "empty" || status === "error") && (
-                <div className="max-w-2xl mx-auto mt-8 p-8 border border-dashed border-brand-border rounded-xl bg-brand-card/20 text-center">
+                <div className="max-w-2xl mx-auto mt-8 p-8 border border-dashed border-brand-border rounded-xl bg-brand-card/20 text-center animate-in fade-in duration-500">
                   {status === "error" ? (
                     <>
                       <ShieldAlert size={40} className="text-brand-danger mx-auto mb-4" />
-                      <p className="font-bold text-brand-danger">Analysis Failed</p>
+                      <p className="font-bold text-brand-danger">Analysis Interrupted</p>
                       <p className="text-sm text-brand-muted mt-2">{errorMsg}</p>
                     </>
                   ) : (
                     <>
+                      {/* Empty State with Actionable Advice */}
                       <Info size={40} className="text-brand-muted mx-auto mb-4" />
-                      <p className="font-bold text-brand-text">No Structural Gaps Found</p>
-                      <p className="text-sm text-brand-muted mt-2">{scanAnalysis?.reasoning}</p>
+                      <p className="font-bold text-brand-text text-lg">No Strong Gaps Detected</p>
+                      <p className="text-sm text-brand-muted mt-2 max-w-md mx-auto">
+                        The AI analyzed this topic but didn't find high-confidence structural failures. This usually means the market is satisfied or the topic is too narrow.
+                      </p>
+
+                      <div className="mt-6 flex flex-col items-center gap-2">
+                        <span className="text-[10px] font-mono uppercase text-brand-muted font-bold">Suggested Actions</span>
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          <button onClick={() => handlePivot("Broader Market")} className="px-3 py-1.5 bg-brand-bg border border-brand-border rounded text-xs hover:border-brand-accent transition-colors">
+                            Try Broader Topic
+                          </button>
+                          <button onClick={() => handlePivot("Competitor Weaknesses")} className="px-3 py-1.5 bg-brand-bg border border-brand-border rounded text-xs hover:border-brand-accent transition-colors">
+                            Scan Competitors
+                          </button>
+                        </div>
+                      </div>
 
                       {scanAnalysis?.suggested_pivot && (
                         <button
                           onClick={() => handlePivot(scanAnalysis.suggested_pivot!)}
-                          className="mt-4 text-brand-accent hover:underline text-sm"
+                          className="mt-4 text-brand-accent hover:underline text-sm font-medium"
                         >
-                          Try "{scanAnalysis.suggested_pivot}"
+                          Pivot to "{scanAnalysis.suggested_pivot}" →
                         </button>
                       )}
                     </>
@@ -321,9 +377,9 @@ const App: React.FC = () => {
 
                   <button
                     onClick={resetSearch}
-                    className="mt-6 text-sm font-mono text-brand-text border-b border-brand-text pb-0.5"
+                    className="mt-8 px-6 py-2 bg-brand-text text-brand-bg font-bold rounded hover:bg-white/90 transition-colors text-sm"
                   >
-                    Try Another Search
+                    Start New Search
                   </button>
                 </div>
               )}
@@ -411,6 +467,20 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-brand-border/40 bg-brand-bg/80 backdrop-blur py-4 z-40">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[10px] text-brand-muted font-mono uppercase tracking-wider">
+          <div>
+            © 2026 GAPHUNTER INTELLIGENCE. ALL RIGHTS RESERVED.
+          </div>
+          <div className="flex items-center gap-6">
+            <span className="hover:text-brand-text cursor-pointer transition-colors">Privacy Policy</span>
+            <span className="hover:text-brand-text cursor-pointer transition-colors">Terms of Service</span>
+            <span className="hover:text-brand-text cursor-pointer transition-colors">Contact Support</span>
+          </div>
+        </div>
+      </footer>
 
       <DevTools scanId={currentScanId} />
     </div>

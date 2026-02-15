@@ -8,10 +8,10 @@ interface ScannerHUDProps {
 
 /** Human-readable labels for known backend pipeline stages */
 const STAGE_LABELS: Record<string, string> = {
-  EXPAND: "Expanding search topics",
-  GENERATE: "Generating gap hypotheses",
-  RANK: "Ranking and scoring gaps",
-  VERIFY: "Verifying evidence quality",
+  EXPAND: "Analyzing topics...",
+  GENERATE: "Collecting evidence & complaints...",
+  RANK: "Ranking gaps by potential...",
+  VERIFY: "Verifying sources...",
 };
 
 /** Flavor text cycled when no real stage info is available from backend */

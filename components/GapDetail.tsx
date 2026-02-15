@@ -5,7 +5,7 @@ import EvidenceStack from './EvidenceStack';
 import {
     Target, FileText, CheckCircle2,
     Zap, Users, Clock,
-    Ban, Hammer, Download, Share2, HelpCircle, AlertTriangle, LayoutTemplate
+    Ban, Hammer, Download, Share2, HelpCircle, AlertTriangle, LayoutTemplate, Copy, Link
 } from 'lucide-react';
 
 interface GapDetailProps {
@@ -39,6 +39,23 @@ const GapDetail: React.FC<GapDetailProps> = ({ gap }) => {
         if (s >= 85) return 'bg-brand-accent/10 text-brand-accent border-brand-accent/20';
         if (s >= 70) return 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20';
         return 'bg-amber-400/10 text-amber-400 border-amber-400/20';
+    };
+
+    const [copiedGap, setCopiedGap] = useState(false);
+    const [copiedEvidence, setCopiedEvidence] = useState(false);
+
+    const copyGap = () => {
+        const text = `GAP: ${gap.title}\nCHOKEPOINT: ${gap.chokepoint_statement}\nWHY NOW: ${gap.why_now_statement}`;
+        navigator.clipboard.writeText(text);
+        setCopiedGap(true);
+        setTimeout(() => setCopiedGap(false), 2000);
+    };
+
+    const copyEvidence = () => {
+        const links = gap.evidence_stack.map(e => `- ${e.url} (${e.source})`).join('\n');
+        navigator.clipboard.writeText(links);
+        setCopiedEvidence(true);
+        setTimeout(() => setCopiedEvidence(false), 2000);
     };
 
     return (
@@ -284,11 +301,21 @@ const GapDetail: React.FC<GapDetailProps> = ({ gap }) => {
                     </div>
 
                     <div className="flex gap-2">
-                        <button className="p-2 hover:bg-brand-card rounded text-brand-text transition-colors" title="Export">
-                            <Download size={16} />
+                        <button
+                            onClick={copyGap}
+                            className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-brand-card rounded text-brand-text transition-colors border border-transparent hover:border-brand-border text-xs"
+                            title="Copy Gap Details"
+                        >
+                            {copiedGap ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                            {copiedGap ? <span className="text-emerald-500 font-bold">Copied</span> : "Copy Gap"}
                         </button>
-                        <button className="p-2 hover:bg-brand-card rounded text-brand-text transition-colors" title="Share">
-                            <Share2 size={16} />
+                        <button
+                            onClick={copyEvidence}
+                            className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-brand-card rounded text-brand-text transition-colors border border-transparent hover:border-brand-border text-xs"
+                            title="Copy Evidence Links"
+                        >
+                            {copiedEvidence ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Link size={14} />}
+                            {copiedEvidence ? <span className="text-emerald-500 font-bold">Copied</span> : "Evidence"}
                         </button>
                     </div>
                 </div>
@@ -299,3 +326,5 @@ const GapDetail: React.FC<GapDetailProps> = ({ gap }) => {
 };
 
 export default GapDetail;
+
+

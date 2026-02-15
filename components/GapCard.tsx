@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Gap } from '../src/types';
-import { CheckCircle2, ChevronRight, BarChart3, AlertCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, ChevronRight, BarChart3, AlertCircle, Sparkles, Link, AlertTriangle } from 'lucide-react';
 
 interface GapCardProps {
   gap: Gap;
@@ -41,13 +41,13 @@ const GapCard: React.FC<GapCardProps> = ({ gap, onClick, isActive, isPrimary }) 
               {score}
             </span>
 
-            {isExperimental ? (
-              <span className="flex items-center gap-1 text-[9px] font-mono text-brand-muted uppercase tracking-wider bg-brand-border/20 px-1.5 py-0.5 rounded">
-                <Sparkles size={8} /> Experimental
+            {gap.is_verified ? (
+              <span className="flex items-center gap-1 text-[9px] font-mono text-emerald-500 uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                <Link size={8} /> Verified
               </span>
             ) : (
-              <span className="flex items-center gap-1 text-[9px] font-mono text-emerald-500 uppercase tracking-wider bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                <CheckCircle2 size={8} /> Validated
+              <span className="flex items-center gap-1 text-[9px] font-mono text-amber-500 uppercase tracking-wider bg-amber-500/10 px-1.5 py-0.5 rounded" title="Source unverified">
+                <AlertTriangle size={8} /> Unverified
               </span>
             )}
           </div>

@@ -124,7 +124,7 @@ const SearchSurface: React.FC<SearchSurfaceProps> = ({ onSearch, isLoading, scan
     };
 
     const handleRunDiscovery = () => {
-        console.log("[SearchSurface] handleRunDiscovery called", { activeTags, excludedTerms });
+        // console.log("[SearchSurface] handleRunDiscovery called", { activeTags, excludedTerms });
         if (activeTags.length > 0) {
             onSearch(activeTags, excludedTerms);
         }
@@ -191,7 +191,7 @@ const SearchSurface: React.FC<SearchSurfaceProps> = ({ onSearch, isLoading, scan
                     onClick={handleContainerClick}
                     className="bg-brand-card/40 backdrop-blur-md border border-brand-border rounded-xl p-2 shadow-2xl relative overflow-visible cursor-text group focus-within:border-brand-accent/50 focus-within:ring-1 focus-within:ring-brand-accent/20 transition-all duration-300"
                 >
-                    <div className="flex flex-wrap gap-2 min-h-[52px] items-center px-2 pr-12 relative">
+                    <div className="flex flex-wrap gap-2 min-h-[52px] items-center px-2 pr-28 relative">
                         {activeTags.map(tag => (
                             <div key={tag.id} className={`group/tag relative inline-flex items-center border rounded px-2.5 py-1.5 animate-in zoom-in-50 duration-200 cursor-default ${getTagStyle(tag)}`}>
                                 <span className={`text-sm font-medium flex items-center gap-1 ${tag.status === 'PROVISIONAL' ? 'border-b border-dashed border-current/50' : ''}`}>
@@ -218,9 +218,19 @@ const SearchSurface: React.FC<SearchSurfaceProps> = ({ onSearch, isLoading, scan
                             disabled={isLoading}
                         />
 
-                        <span className={`absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-mono transition-colors ${activeTags.length >= 4 ? 'text-brand-danger' : 'text-brand-muted/60'}`}>
-                            {activeTags.length}/4
-                        </span>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                            {activeTags.length > 0 && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setActiveTags([]); }}
+                                    className="text-[10px] uppercase font-bold text-brand-muted hover:text-brand-danger transition-colors flex items-center gap-1"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                            <span className={`text-[10px] font-mono transition-colors ${activeTags.length >= 4 ? 'text-brand-danger' : 'text-brand-muted/60'}`}>
+                                {activeTags.length}/4
+                            </span>
+                        </div>
                     </div>
 
                     {/* Suggestions Dropdown */}
